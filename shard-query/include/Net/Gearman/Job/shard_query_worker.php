@@ -118,7 +118,11 @@ class Net_Gearman_Job_shard_query_worker extends Net_Gearman_Job_Common {
 			$sql = $arg->sql;
 		}
 
-		return json_encode(array('resultset' => $resultset, 'errors'=>$errors, 'sql' => $sql, 'has_rows' => $has_rows));
+        $result = json_encode(array('resultset' => $resultset, 'errors'=>$errors, 'sql' => $sql, 'has_rows' => $has_rows));
+        if ($result === false) {
+            return "json_encode error: " . json_last_error_msg();
+        }
+        return $result;
 	}
 
 	function make_resultset($SQ, &$stmt = null) {
