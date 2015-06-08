@@ -32,6 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #this database.  You must have permissions to create and drop this database.
 #when setting up shard query THE CONTENTS OF THIS DATABASE WILL BE DESTROYED!
 
+#Global const options:
+$enable_partitions_parralelism = false;
+
 $contents = file_get_contents('config.inc',true);
 $config_database = unserialize($contents);
 if(!is_array($config_database)) 

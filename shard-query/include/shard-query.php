@@ -86,6 +86,7 @@ class ShardQuery {
     $state->windows = array();
     $state->added_where = false;
     $state->used_star = false;
+    $state->partitions_parralelism = false;
     
     return $state;
   }
@@ -128,6 +129,7 @@ class ShardQuery {
     $state->star_opt = false;
     $state->current_schema = $schema_name;
     $state->extra_tables = array(); //any tables that get created along the way and need cleaning up at the end
+    $state->partitions_parralelism = $enable_partitions_parralelism;
     
     switch($config_database['mapper_type']) {
       case SQ_DIRECTORY:
@@ -2991,6 +2993,10 @@ class ShardQuery {
         #have to do all removals in a first pass
         
         foreach($state->tables as $table_name => $table_info) {
+          if (!$state->partitions_parralelism) {
+            #clear all partition names
+            $table_info['partition_info']['partition_names'] = array();
+          }
           if(empty($table_info['alias']) || $table_info['alias'] === '') {
             $alias = $table_name;
           } else {
@@ -3004,7 +3010,10 @@ class ShardQuery {
         
         #now build out queries for each partition for each table
         foreach($state->tables as $table_name => $table_info) {
-          
+          if (!$state->partitions_parralelism) {
+            #clear all partition names
+            $table_info['partition_info']['partition_names'] = array();
+          }
           if(empty($table_info['alias']) || $table_info['alias'] === '') {
             $alias = $table_name;
           } else {
@@ -3026,10 +3035,9 @@ class ShardQuery {
                 }
               }
             }
-            #remove the token so that it doesn't mess up further tables in the query
-            $select['shard_sql'] = str_replace('%p' . $alias, "", $select['shard_sql']);
           }
-          
+          #remove the token so that it doesn't mess up further tables in the query
+          $select['shard_sql'] = str_replace('%p' . $alias, "", $select['shard_sql']);
         }
         
       } else {
@@ -3041,7 +3049,11 @@ class ShardQuery {
         if($where == "") $where = " WHERE 1=1";
         while($row = $state->DAL->my_fetch_assoc($stmt)) {
           $table_or_alias = $row['table'];
-          $partitions = $row['partitions'];
+          if ($state->partitions_parralelism) {
+            $partitions = $row['partitions'];
+          } else {
+            $partitions = '';
+          }
           $partitions = explode(',', $partitions);
           foreach($partitions as $partition_name) {
             foreach($state->tables as $table_name => $table_info) {
