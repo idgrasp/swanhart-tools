@@ -68,7 +68,7 @@ proc:begin
   -- the column json has a very simple structure.  The easiest thing to do is simply 
   -- get rid of the extra JSON with REPLACE() and generate the CREATE TABLE with 
   -- the column names that remain
-  set @create := concat('create table temporary',v_table, '(', replace(replace(replace(v_columns, '{"type":250,"name":"',''),'"}',''),',',' text,'),' text)');
+  set @create := concat('create temporary table ',v_table, '(', replace(replace(replace(v_columns, '{"type":250,"name":"',''),'"}',''),',',' text,'),' text)');
 
   -- generate the INSERT statement
   set @insert:= concat('insert into ', v_table, ' values ', replace( replace( replace( replace( replace( substr(v_json,v_pos+1,v_pos2-v_pos),'[\\','[') ,'\\",\\"','","') ,'\\"]','"]') ,'[' ,'(') ,']',')'));
